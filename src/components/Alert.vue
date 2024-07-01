@@ -14,7 +14,6 @@ let alert = reactive({
 })
 
 const handleAlert = data => {
-  console.log('Here', data)
   alert = Object.assign({}, {})
   if (typeof data == 'string') {
     alert.text = data

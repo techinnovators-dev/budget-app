@@ -44,15 +44,17 @@ const closeDeleteItem = () => {
 v-container(fluid)
   v-card.mx-auto(width="400")
     v-card-text.pb-0
+      .d-flex.justify-space-between.mb-2
+        .text-h6 Transactions
+        v-btn(icon="mdi-plus", @click="openEditItem({})", size="small", color="primary", density="comfortable")
       v-data-table(
+        v-if="transactionStore.transactionsList.length",
         :items="transactionStore.transactionsList",
         :headers="headers",
-        :search="search"
+        :search="search",
+        no-data-text="No transactions meet your search criteria"
       )
         template(#top)
-          .d-flex.justify-space-between.mb-2
-            .text-h6 Transactions
-            v-btn(icon="mdi-plus", @click="openEditItem({})", size="small", color="primary", density="comfortable")
           v-text-field(placeholder="Search", v-model="search", prepend-inner-icon="mdi-magnify", density="compact")
         template(#item.value="{item}")
           .text-success(v-if="item.sign == 1") + {{ commaNumber(item.value) }}
@@ -61,10 +63,11 @@ v-container(fluid)
           .d-flex.justify-space-around
             v-btn(icon="mdi-pencil-outline", @click="openEditItem(item)", variant="text", size="x-small")
             v-btn(icon="mdi-trash-can-outline", @click="openDeleteItem(item)", variant="text", size="x-small")
-        template(#no-data)
-          .text-center No Transactions Created
-          a.text-center(href="", @click.prevent="openEditItem({})") Create one
         template(#bottom, v-if="!transactionStore.transactionsList.length")
+        
+      .text-center.py-2(v-else)
+        div No Transactions Found
+        a(href="", @click.prevent="openEditItem({})") Add one
 
   v-dialog(v-model="showEditItem")
     edit-transaction.mx-auto(:item="selectedItem", @close="closeEditItem")

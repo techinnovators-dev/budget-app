@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, defineAsyncComponent } from 'vue'
-import { onBeforeRouteUpdate, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useTransactionStore } from '@/stores/transaction'
 import { useUserStore } from '@/stores/user'
 import { useFormat } from '@/use/format'
@@ -10,11 +10,6 @@ const userStore = useUserStore()
 const transactionStore = useTransactionStore()
 const router = useRouter()
 const { commaNumber } = useFormat()
-
-// Force Transaction Entry
-onBeforeRouteUpdate(() => {
-  if (!transactionStore.transactionsList.length) router.push({name: 'transactions'})
-})
 
 const EditTransaction = defineAsyncComponent(() => import('@/components/Transaction/EditTransaction.vue'))
 
@@ -29,8 +24,8 @@ const upcomingTransactions = computed(() => {
   const final = []
   let i = 0
   transactionStore.transactionsList.forEach(t => {
-    const {name, value, sign} = t
-    final.push({ day: dayjs().add(++i, 'day'), name, value, sign})
+    const {id, name, value, sign} = t
+    final.push({ day: dayjs().add(++i, 'day'), id, name, value, sign})
   })
   final.sort((a, b) => a.day.isSame(b.day, 'day') ? 0 : a.day.isBefore(b.day) ? -1 : 1)
   let balance = parseFloat(userStore.funds.value)
@@ -66,8 +61,8 @@ const showAddTransaction = ref(false)
 v-container(fluid)
   v-row.mt-2
     v-col
-      .text-h4 Your Budget: {{ commaNumber(budget.balance) }}
-      .text-body-1.mt-1 until {{ dayjs(budget.day).format('ddd, MMMM DD, YYYY') }}
+      .text-h4 Your Budget: {{ commaNumber(budget?.balance) }}
+      .text-body-1.mt-1 until {{ dayjs(budget?.day).format('ddd, MMMM DD, YYYY') }}
     v-col(cols="3")
       v-text-field(
         label="Current Funds", v-model="fundsProxy.value",
@@ -93,6 +88,10 @@ v-container(fluid)
           .text-error(v-else) - {{ commaNumber(item.value) }}
         template(#item.balance="{item}")
           span(:class="item.balance < 0 ? 'text-error' : null") {{ commaNumber(item.balance) }}
+        template(#no-data)
+          .text-center.py-2
+            div Can't budget without any transactions!
+            a(href="", @click.prevent="showAddTransaction=true") Add one
 
   v-dialog(v-model="showAddTransaction")
     edit-transaction.mx-auto(:item="{}", @close="showAddTransaction = false")
