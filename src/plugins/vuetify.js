@@ -11,7 +11,11 @@ export default createVuetify({
     sets: { mdi },
   },
   defaults: {
-    VTextField: { variant: 'underlined' },
+    VTextField: { variant: 'underlined', density: 'comfortable', hideDetails: 'auto' },
+    VSelect: { variant: 'underlined', density: 'comfortable', hideDetails: 'auto' },
+    VRadioGroup: { density: 'comfortable', hideDetails: 'auto' },
+    VCheckbox: { density: 'comfortable', hideDetails: 'auto' },
+    VBtn: { density: 'comfortable' },
     VForm: { validateOn: 'blur'}
   }
 })

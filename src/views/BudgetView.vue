@@ -80,7 +80,7 @@ v-container(fluid)
         template(#top)
           .text-h5.mb-2
             | Upcoming Transactions
-            v-btn.ml-2(icon="mdi-plus", @click="showAddTransaction=true", size="small", variant="text", density="comfortable")
+            v-btn.ml-2(icon="mdi-plus", @click="showAddTransaction=true", size="small", variant="text")
         template(#item.day="{item}")
           | {{ dayjs(item.day).format('ddd, MMMM DD, YYYY')}}
         template(#item.value="{item}")
@@ -93,7 +93,7 @@ v-container(fluid)
             div Can't budget without any transactions!
             a(href="", @click.prevent="showAddTransaction=true") Add one
 
-  v-dialog(v-model="showAddTransaction")
+  v-dialog(v-model="showAddTransaction", persistent)
     edit-transaction.mx-auto(:item="{}", @close="showAddTransaction = false")
 
 </template>
