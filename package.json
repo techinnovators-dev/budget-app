@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dayjs": "^1.11.11",
+    "eventemitter3": "^5.0.1",
     "pinia": "^2.1.7",
     "vite-plugin-vuetify": "^2.0.3",
     "vue": "^3.4.29",
