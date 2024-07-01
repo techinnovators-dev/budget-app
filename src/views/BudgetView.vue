@@ -5,6 +5,8 @@ import { useTransactionStore } from '@/stores/transaction'
 import { useUserStore } from '@/stores/user'
 import { useFormat } from '@/use/format'
 import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+dayjs.extend(isSameOrAfter)
 
 const userStore = useUserStore()
 const transactionStore = useTransactionStore()
@@ -20,19 +22,37 @@ const lastUpdate = computed(() => userStore.funds?.updated_at ? dayjs(userStore.
 const updateFunds = () => userStore.setFunds(fundsProxy.value.value)
 
 // Upcoming
+const today = dayjs().startOf('day')
+const lastDay = today.add(61, 'days').startOf('day')
 const upcomingTransactions = computed(() => {
   const final = []
   let i = 0
   transactionStore.transactionsList.forEach(t => {
+    let e = t.end_date ? dayjs(t.end_date) : null
+    if (e && e.isBefore(today)) return // Transaction ended before today
+    let s = dayjs(t.start_date)
+    if (!t.interval_value && s.isBefore(today)) return // One time transaction was before today
+    if (s.isSameOrAfter(lastDay)) return // Transaction starts after budget range
+    if (t.interval_value) {
+      let diff = Math.floor(s.diff(today, t.interval))
+      if (diff > 0) {
+        let ints = Math.floor(diff/t.interval_value)
+        s = s.add(ints+t.interval_value, t.interval) // Get to the next itteration
+      }
+    }
     const {id, name, value, sign} = t
-    final.push({ day: dayjs().add(++i, 'day'), id, name, value, sign})
+    while (s.isBefore(lastDay) && s.isSameOrAfter(today) && (!t.end_date || s.isBefore(e))) {
+      final.push({ id: `${id}-${s.format('YYYY-MM-DD')}`, tansaction_id: id, name, value, sign, day: s})
+      if (!t.interval_value) break
+      s = s.add(t.interval_value, t.interval)
+    }
   })
   final.sort((a, b) => a.day.isSame(b.day, 'day') ? 0 : a.day.isBefore(b.day) ? -1 : 1)
   let balance = parseFloat(userStore.funds.value) || 0
-  final.forEach(t => {
-    balance += (t.value * t.sign)
-    t.balance = balance
-    t.day = t.day.toDate()
+  final.forEach(x => {
+    balance += (x.value * x.sign)
+    x.balance = balance
+    x.day = x.day.toDate()
   })
   return final
 })
