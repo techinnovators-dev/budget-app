@@ -8,7 +8,7 @@ export const useUserStore = defineStore('user', () => {
   const funds = reactive(JSON.parse(storage.getItem('Funds') || '{"value": 0}'))
 
   const setFunds = value => {
-    funds.value = parseFloat(value)
+    funds.value = value ? parseFloat(value) : null
     funds.updated_at = new Date().toISOString()
     storage.setItem('Funds', JSON.stringify(funds))
   }

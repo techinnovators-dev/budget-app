@@ -28,7 +28,7 @@ const upcomingTransactions = computed(() => {
     final.push({ day: dayjs().add(++i, 'day'), id, name, value, sign})
   })
   final.sort((a, b) => a.day.isSame(b.day, 'day') ? 0 : a.day.isBefore(b.day) ? -1 : 1)
-  let balance = parseFloat(userStore.funds.value)
+  let balance = parseFloat(userStore.funds.value) || 0
   final.forEach(t => {
     balance += (t.value * t.sign)
     t.balance = balance
