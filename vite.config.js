@@ -7,7 +7,6 @@ import vuetify from 'vite-plugin-vuetify'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/budget-app/',
   plugins: [
     vue(),
     vueDevTools(),
