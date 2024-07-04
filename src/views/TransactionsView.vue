@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, defineAsyncComponent } from 'vue'
+import { ref, defineAsyncComponent } from 'vue'
+import { useDisplay } from 'vuetify'
 import { useTransactionStore } from '@/stores/transaction'
 import { useFormat } from '@/use/format'
 import dayjs from 'dayjs'
@@ -8,6 +9,7 @@ const EditTransaction = defineAsyncComponent(() => import('@/components/Transact
 const DeleteTransaction = defineAsyncComponent(() => import('@/components/Transaction/DeleteTransaction.vue'))
 
 const transactionStore = useTransactionStore()
+const { mobile } = useDisplay()
 const { commaNumber } = useFormat()
 
 const headers = [
@@ -52,8 +54,8 @@ const getIntervalText = (item) => {
 </script>
 
 <template lang="pug">
-v-container(fluid)
-  v-card.mx-auto(max-width="800")
+v-container(fluid, :class="mobile ? 'px-0' : null")
+  v-card(max-width="800", :class="mobile ? 'flat px-0 mx-0 elevation-0' : 'mx-auto'")
     v-card-text.pb-0
       .d-flex.justify-space-between.mb-2
         .text-h6 Transactions
@@ -67,7 +69,7 @@ v-container(fluid)
         no-data-text="No transactions match your search"
       )
         template(#top)
-          v-text-field(placeholder="Search", v-model="search", prepend-inner-icon="mdi-magnify", density="compact")
+          v-text-field.my-2(placeholder="Search", v-model="search", prepend-inner-icon="mdi-magnify", density="compact")
         template(#item.value="{item}")
           .text-success(v-if="item.sign == 1") + {{ commaNumber(item.value) }}
           .text-error(v-else) - {{ commaNumber(item.value) }}
@@ -87,9 +89,9 @@ v-container(fluid)
         div No Transactions Found
         a(href="", @click.prevent="openEditItem({})") Add one
 
-  v-dialog(v-model="showEditItem")
+  v-dialog(v-model="showEditItem", :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : null")
     edit-transaction.mx-auto(:item="selectedItem", @close="closeEditItem", persistent)
 
   v-dialog(v-model="showDeleteItem")
-    delete-transaction.mx-auto(:item="selectedItem", @close="closeDeleteItem")
+    delete-transaction(:item="selectedItem", @close="closeDeleteItem", :class="mobile ? 'w-100' : 'mx-auto'")
 </template>
