@@ -12,7 +12,7 @@ dayjs.extend(isSameOrAfter)
 const userStore = useUserStore()
 const transactionStore = useTransactionStore()
 const router = useRouter()
-const { mobile } = useDisplay()
+const { mobile, md } = useDisplay()
 const { commaNumber } = useFormat()
 
 const EditTransaction = defineAsyncComponent(() => import('@/components/Transaction/EditTransaction.vue'))
@@ -96,7 +96,7 @@ v-container(fluid)
       .text-body-1.mt-1(v-if="!!budget[0]") until {{ dayjs(budget[0].day).format('ddd, MMMM DD, YYYY') }}
       .text-caption(v-if="budget[0] && budget[1] && budget[0].day != budget[1].day")
         | then {{ commaNumber(budget[1].balance) }} until {{ dayjs(budget[1].day).format('ddd, MMMM DD, YYYY') }}
-    v-col.d-flex.align-center(:cols="mobile ? 12 : 3")
+    v-col.d-flex.align-center(:cols="mobile ? 12 : md ? 4 : 3")
       v-text-field(
         label="Current Funds", v-model="fundsProxy.value", type="number", :min="1",
         prepend-icon="mdi-cash-multiple", @change="updateFunds", density="default",
@@ -115,7 +115,7 @@ v-container(fluid)
               .text-h5.mb-2
                 | Upcoming Transactions
                 v-btn.ml-2(icon="mdi-plus", @click="showAddTransaction=true", size="small", variant="text")
-            v-col.d-flex.align-start(:cols="mobile ? 12 : 3")
+            v-col.d-flex.align-start(:cols="mobile ? 12 : md ? 4 : 3")
               v-text-field(label="Budget Days", v-model="budgetDays", type="number", prepend-icon="mdi-calendar-month")
         template(#item.day="{item}")
           | {{ dayjs(item.day).format('ddd, MMMM DD, YYYY')}}
@@ -129,7 +129,7 @@ v-container(fluid)
             div Can't budget without any transactions!
             a(href="", @click.prevent="showAddTransaction=true") Add one
 
-  v-dialog(v-model="showAddTransaction", persistent, :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : null")
+  v-dialog(v-model="showAddTransaction", persistent, :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : 'dialog-transition'")
     edit-transaction.mx-auto(:item="{}", @close="showAddTransaction = false")
 
 </template>

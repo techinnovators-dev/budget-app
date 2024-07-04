@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, defineEmits } from 'vue'
+import { ref, watch } from 'vue'
 import { useTransactionStore } from '@/stores/transaction'
 import { useRules } from '@/use/rules'
 import { useEvent } from '@/use/event'

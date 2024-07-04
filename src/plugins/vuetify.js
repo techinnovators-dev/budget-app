@@ -10,6 +10,9 @@ export default createVuetify({
     aliases,
     sets: { mdi },
   },
+  display: {
+    mobileBreakpoint: 'md'
+  },
   defaults: {
     VTextField: { variant: 'underlined', density: 'comfortable', hideDetails: 'auto' },
     VSelect: { variant: 'underlined', density: 'comfortable', hideDetails: 'auto' },

@@ -89,7 +89,7 @@ v-container(fluid, :class="mobile ? 'px-0' : null")
         div No Transactions Found
         a(href="", @click.prevent="openEditItem({})") Add one
 
-  v-dialog(v-model="showEditItem", :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : null")
+  v-dialog(v-model="showEditItem", :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : 'dialog-transition'")
     edit-transaction.mx-auto(:item="selectedItem", @close="closeEditItem", persistent)
 
   v-dialog(v-model="showDeleteItem")
