@@ -17,7 +17,7 @@ export const useTransactionStore = defineStore('transaction', () => {
     ids.value.forEach(i => i > id ? id = i : null)
     id++
     t.id = id
-    transactions[id] = t
+    transactions[id] = JSON.parse(JSON.stringify(t))
     save()
   }
   const editTransaction = t => {

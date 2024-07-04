@@ -30,7 +30,7 @@ const { required } = useRules()
 const event = useEvent()
 
 // Item
-const item = ref({})
+const item = ref(defaultItem)
 const isRecurring = ref(false)
 watch(() => props.item, newVal => {
   item.value = newVal.id ? newVal : defaultItem
@@ -42,13 +42,13 @@ watch(() => props.item, newVal => {
 // Form
 const close = () => emit('close')
 const form = ref()
-const formValid = ref(null)
 const loading = ref(false)
 const submit = async () => {
   const {valid} = await form.value?.validate()
   if (valid) {
     loading.value = true
     try {
+      item.value.value = parseFloat(item.value.value)
       if (item.value.id) {
         editTransaction(item.value)
       } else {
