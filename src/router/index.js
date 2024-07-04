@@ -5,10 +5,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: () => ({ name: 'budget' })
-    },
-    {
-      path: '/budget',
+      alias: '/budget',
       name: 'budget',
       component: () => import('@/views/BudgetView.vue')
     },
