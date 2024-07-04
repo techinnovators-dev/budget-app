@@ -22,26 +22,26 @@ const lastUpdate = computed(() => userStore.funds?.updated_at ? dayjs(userStore.
 const updateFunds = () => userStore.setFunds(fundsProxy.value.value)
 
 // Upcoming
-const today = dayjs().startOf('day')
-const lastDay = today.add(61, 'days').startOf('day')
+const today = ref(dayjs().startOf('day'))
+const budgetDays = ref(60)
+const lastDay = computed(() => today.value.add(parseInt(budgetDays.value || 0)+1, 'days').startOf('day'))
 const upcomingTransactions = computed(() => {
   const final = []
-  let i = 0
   transactionStore.transactionsList.forEach(t => {
     let e = t.end_date ? dayjs(t.end_date) : null
-    if (e && e.isBefore(today)) return // Transaction ended before today
+    if (e && e.isBefore(today.value)) return // Transaction ended before today
     let s = dayjs(t.start_date)
-    if (!t.interval_value && s.isBefore(today)) return // One time transaction was before today
-    if (s.isSameOrAfter(lastDay)) return // Transaction starts after budget range
+    if (!t.interval_value && s.isBefore(today.value)) return // One time transaction was before today
+    if (s.isSameOrAfter(lastDay.value)) return // Transaction starts after budget range
     if (t.interval_value) {
-      let diff = Math.floor(s.diff(today, t.interval))
+      let diff = Math.floor(s.diff(today.value, t.interval))
       if (diff > 0) {
         let ints = Math.floor(diff/t.interval_value)
         s = s.add(ints+t.interval_value, t.interval) // Get to the next itteration
       }
     }
     const {id, name, value, sign} = t
-    while (s.isBefore(lastDay) && s.isSameOrAfter(today) && (!t.end_date || s.isBefore(e))) {
+    while (s.isBefore(lastDay.value) && s.isSameOrAfter(today.value) && (!e || (e && s.isBefore(e)))) {
       final.push({ id: `${id}-${s.format('YYYY-MM-DD')}`, tansaction_id: id, name, value, sign, day: s})
       if (!t.interval_value) break
       s = s.add(t.interval_value, t.interval)
@@ -49,27 +49,36 @@ const upcomingTransactions = computed(() => {
   })
   final.sort((a, b) => a.day.isSame(b.day, 'day') ? 0 : a.day.isBefore(b.day) ? -1 : 1)
   let balance = parseFloat(userStore.funds.value) || 0
-  final.forEach(x => {
+  const count = final.length
+  for (let i = 0; i < count; i++) {
+    let x = final[i]
     balance += (x.value * x.sign)
     x.balance = balance
     x.day = x.day.toDate()
-  })
+    x.index = i
+  }
   return final
 })
+const upcomingCount = computed(() => upcomingTransactions.value.length)
 const headers = [
   {title: 'Date', key: 'day'},
   {title: 'Name', key: 'name', sortable: false},
   {title: 'Amount', key: 'value', sortable: false},
   {title: 'Balance', key: 'balance', sortable: false}
 ]
-
-// Budget
 const budget = computed(() => {
   let min = upcomingTransactions.value[0]
   upcomingTransactions.value.forEach(t => {
     if (t.balance < min.balance) min = t
   })
-  return min
+  let min2 = min ? upcomingTransactions.value[min.index+1] : null
+  if (min2) {
+    for (let i = min2.index; i < upcomingCount.value; i++) {
+      let t = upcomingTransactions.value[i]
+      if (t.balance < min2.balance) min2 = t
+    }
+  }
+  return [min, min2]
 })
 
 // Add Transaction
@@ -81,14 +90,14 @@ const showAddTransaction = ref(false)
 v-container(fluid)
   v-row.mt-2
     v-col
-      .text-h4 Your Budget: {{ commaNumber(budget?.balance) }}
-      .text-body-1.mt-1 until {{ dayjs(budget?.day).format('ddd, MMMM DD, YYYY') }}
-    v-col(cols="3")
+      .text-h4 Your Budget: {{ commaNumber(budget[0]?.balance) }}
+      .text-body-1.mt-1(v-if="!!budget[0]") until {{ dayjs(budget[0].day).format('ddd, MMMM DD, YYYY') }}
+      .text-caption(v-if="budget[0] && budget[1] && budget[0].day != budget[1].day") then {{ commaNumber(budget[1].balance) }} until {{ dayjs(budget[1].day).format('ddd, MMMM DD, YYYY') }}
+    v-col.d-flex.align-center(cols="3")
       v-text-field(
-        label="Current Funds", v-model="fundsProxy.value",
-        prepend-icon="mdi-cash-multiple", @change="updateFunds",
-        :hint="`Updated ${lastUpdate}`", :persistent-hint="!!lastUpdate",
-        hide-details="auto", type="number")
+        label="Current Funds", v-model="fundsProxy.value", type="number", :min="1",
+        prepend-icon="mdi-cash-multiple", @change="updateFunds", density="default",
+        :hint="`Updated ${lastUpdate}`", :persistent-hint="!!lastUpdate")
   v-row
     v-col
       v-data-table(
@@ -98,9 +107,13 @@ v-container(fluid)
         sticky, density="compact"
       )
         template(#top)
-          .text-h5.mb-2
-            | Upcoming Transactions
-            v-btn.ml-2(icon="mdi-plus", @click="showAddTransaction=true", size="small", variant="text")
+          v-row.mb-2
+            v-col.d-flex.align-start
+              .text-h5.mb-2
+                | Upcoming Transactions
+                v-btn.ml-2(icon="mdi-plus", @click="showAddTransaction=true", size="small", variant="text")
+            v-col.d-flex.align-start(cols="3")
+              v-text-field(label="Budget Days", v-model="budgetDays", type="number", prepend-icon="mdi-calendar-month")
         template(#item.day="{item}")
           | {{ dayjs(item.day).format('ddd, MMMM DD, YYYY')}}
         template(#item.value="{item}")
