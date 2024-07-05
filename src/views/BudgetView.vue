@@ -50,9 +50,13 @@ const upcomingTransactions = computed(() => {
     }
   })
   final.sort((a, b) => a.day.isSame(b.day, 'day') ? 0 : a.day.isBefore(b.day) ? -1 : 1)
+  return final
+})
+const upcomingCount = computed(() => upcomingTransactions.value.length)
+const budgetedTransactions = computed(() => {
   let balance = parseFloat(userStore.funds.value) || 0
-  const count = final.length
-  for (let i = 0; i < count; i++) {
+  const final = upcomingTransactions.value
+  for (let i = 0; i < upcomingCount.value; i++) {
     let x = final[i]
     balance += (x.value * x.sign)
     x.balance = balance
@@ -61,7 +65,6 @@ const upcomingTransactions = computed(() => {
   }
   return final
 })
-const upcomingCount = computed(() => upcomingTransactions.value.length)
 const headers = [
   {title: 'Date', key: 'day'},
   {title: 'Name', key: 'name', sortable: false},
@@ -69,14 +72,14 @@ const headers = [
   {title: 'Balance', key: 'balance', sortable: false}
 ]
 const budget = computed(() => {
-  let min = upcomingTransactions.value[0]
-  upcomingTransactions.value.forEach(t => {
+  let min = budgetedTransactions.value[0]
+  budgetedTransactions.value.forEach(t => {
     if (t.balance < min.balance) min = t
   })
-  let min2 = min ? upcomingTransactions.value[min.index+1] : null
+  let min2 = min ? budgetedTransactions.value[min.index+1] : null
   if (min2) {
     for (let i = min2.index; i < upcomingCount.value; i++) {
-      let t = upcomingTransactions.value[i]
+      let t = budgetedTransactions.value[i]
       if (t.balance < min2.balance) min2 = t
     }
   }
@@ -92,10 +95,12 @@ const showAddTransaction = ref(false)
 v-container(fluid)
   v-row.mt-2
     v-col
-      .text-h4 Your Budget: {{ commaNumber(budget[0]?.balance) }}
+      .text-h4.d-flex.align-center Budget: {{ commaNumber(budget[0]?.balance) }}
       .text-body-1.mt-1(v-if="!!budget[0]") until {{ dayjs(budget[0].day).format('ddd, MMMM DD, YYYY') }}
       .text-caption(v-if="budget[0] && budget[1] && budget[0].day != budget[1].day")
-        | then {{ commaNumber(budget[1].balance) }} until {{ dayjs(budget[1].day).format('ddd, MMMM DD, YYYY') }}
+        | then 
+        span.font-weight-bold {{ commaNumber(budget[1].balance) }}&nbsp;
+        | until {{ dayjs(budget[1].day).format('ddd, MMMM DD, YYYY') }}
     v-col.d-flex.align-center(:cols="mobile ? 12 : md ? 4 : 3")
       v-text-field(
         label="Current Funds", v-model="fundsProxy.value", type="number", :min="1",
@@ -104,7 +109,7 @@ v-container(fluid)
   v-row
     v-col
       v-data-table(
-        :items="upcomingTransactions",
+        :items="budgetedTransactions",
         :headers="headers",
         :sort-by="[{key: 'day', order: 'asc'}]",
         sticky, density="compact"
