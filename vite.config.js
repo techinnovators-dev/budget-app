@@ -14,7 +14,33 @@ export default defineConfig({
     vueDevTools(),
     vuetify(),
     VitePWA({
-      injectRegister: 'auto'
+      registerType: 'autoUpdate',
+      injectRegister: false,
+
+      pwaAssets: {
+        disabled: false,
+        config: true,
+      },
+
+      manifest: {
+        name: 'Budget-App',
+        short_name: 'Budget-App',
+        description: 'Tech Innovators Budget App',
+        theme_color: '#ffffff',
+      },
+
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+      },
+
+      devOptions: {
+        enabled: false,
+        navigateFallback: 'index.html',
+        suppressWarnings: true,
+        type: 'module',
+      },
     })
   ],
   resolve: {
