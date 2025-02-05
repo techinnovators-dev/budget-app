@@ -17,6 +17,7 @@ export const useTransactionStore = defineStore('transaction', () => {
     ids.value.forEach(i => i > id ? id = i : null)
     id++
     t.id = id
+    if (t.interval_value) t.interval_value = parseInt(t.interval_value)
     transactions[id] = JSON.parse(JSON.stringify(t))
     save()
   }

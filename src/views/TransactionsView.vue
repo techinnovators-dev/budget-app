@@ -58,7 +58,7 @@ v-container(fluid)
   //- Data Table
   template(v-if="!mobile")
     v-card(max-width="800", :class="mobile ? 'flat px-0 mx-0 elevation-0' : 'mx-auto'")
-      v-card-text.pb-0
+      v-card-text.p-2
         .d-flex.justify-space-between.mb-2
           .text-h6 Transactions
           v-btn(icon="mdi-plus", @click="openEditItem({})", size="small", color="primary")

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, defineAsyncComponent } from 'vue'
+import { ref, computed, watch, defineAsyncComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useTransactionStore } from '@/stores/transaction'
@@ -19,9 +19,13 @@ const EditTransaction = defineAsyncComponent(() => import('@/components/Transact
 
 // Current Funds
 const fundsProxy = ref({})
-watch(() => userStore.funds, newVal => fundsProxy.value = newVal, {immediate: true})
+onMounted(() => fundsProxy.value = {...userStore.funds})
+// watch(() => userStore.funds, newVal => fundsProxy.value = newVal, {immediate: true})
 const lastUpdate = computed(() => userStore.funds?.updated_at ? dayjs(userStore.funds.updated_at).format('MMMM DD, YYYY') : null)
-const updateFunds = () => userStore.setFunds(fundsProxy.value.value)
+const updateFunds = (focused) => {
+  console.log(!focused, fundsProxy.value.value, userStore.funds.value)
+  if (!focused && fundsProxy.value.value != userStore.funds.value) userStore.setFunds(fundsProxy.value.value)
+}
 
 // Upcoming
 const today = ref(dayjs().startOf('day'))
@@ -30,11 +34,12 @@ const lastDay = computed(() => today.value.add(parseInt(budgetDays.value || 0)+1
 const upcomingTransactions = computed(() => {
   const final = []
   transactionStore.transactionsList.forEach(t => {
+    if (t.id != 4) return
     let e = t.end_date ? dayjs(t.end_date) : null
     if (e && e.isBefore(today.value)) return // Transaction ended before today
-    let s = dayjs(t.start_date)
+    let s = dayjs(t.start_date).startOf('day')
     if (!t.interval_value && s.isBefore(today.value)) return // One time transaction was before today
-    if (s.isSameOrAfter(lastDay.value)) return // Transaction starts after budget range
+    if (s.isAfter(lastDay.value, 'day')) return // Transaction starts after budget range
     if (t.interval_value) {
       let diff = Math.floor(s.diff(today.value, t.interval))
       if (diff > 0) {
@@ -43,7 +48,7 @@ const upcomingTransactions = computed(() => {
       }
     }
     const {id, name, value, sign} = t
-    while (s.isBefore(lastDay.value) && s.isSameOrAfter(today.value) && (!e || (e && s.isBefore(e)))) {
+    while (s.isBefore(lastDay.value) && s.isSameOrAfter(today.value, 'day') && (!e || (e && s.isBefore(e)))) {
       final.push({ id: `${id}-${s.format('YYYY-MM-DD')}`, tansaction_id: id, name, value, sign, day: s})
       if (!t.interval_value) break
       s = s.add(t.interval_value, t.interval)
@@ -55,12 +60,12 @@ const upcomingTransactions = computed(() => {
 const upcomingCount = computed(() => upcomingTransactions.value.length)
 const budgetedTransactions = computed(() => {
   let balance = parseFloat(userStore.funds.value) || 0
-  const final = upcomingTransactions.value
+  const final = [...upcomingTransactions.value]
   for (let i = 0; i < upcomingCount.value; i++) {
     let x = final[i]
     balance += (x.value * x.sign)
     x.balance = balance
-    x.day = x.day.toDate()
+    if (typeof x.day.toDate === 'function') x.day = x.day.toDate()
     x.index = i
   }
   return final
@@ -104,8 +109,8 @@ v-container(fluid)
     v-col.d-flex.align-center(:cols="mobile ? 12 : md ? 4 : 3")
       v-text-field(
         label="Current Funds", v-model="fundsProxy.value", type="number", :min="1",
-        prepend-icon="mdi-cash-multiple", @change="updateFunds", density="default",
-        :hint="`Updated ${lastUpdate}`", :persistent-hint="!!lastUpdate")
+        prepend-icon="mdi-cash-multiple", @update:focused="updateFunds", density="default",
+        :hint="lastUpdate ? `Updated ${lastUpdate}` : null", :persistent-hint="!!lastUpdate")
   v-row
     v-col
       v-data-table(
@@ -115,7 +120,7 @@ v-container(fluid)
         sticky, density="compact"
       )
         template(#top)
-          v-row.mb-2
+          v-row.pt-2.pl-2.mb-2
             v-col.d-flex.align-start
               .text-h5.mb-2
                 | Upcoming Transactions
