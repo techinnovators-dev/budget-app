@@ -143,14 +143,15 @@ v-container(fluid)
             v-col.d-flex.align-start(:cols="mobile ? 12 : md ? 4 : 3")
               v-text-field(label="Budget Days", v-model="budgetDays", type="number", prepend-icon="mdi-calendar-month")
         template(#item.day="{item}")
-          | {{ dayjs(item.day).format('ddd, MMMM DD, YYYY')}}
+          span(:class="item.balance == budget[0]?.balance ? 'font-weight-bold text-decoration-underline' : null") {{ dayjs(item.day).format('ddd, MMMM DD, YYYY')}}
         template(#item.name="{item}")
-          .cursor-pointer(@click.prevent="editBudgetTransaction(item.transaction_id)") {{ item.name}}
+          .cursor-pointer(@click.prevent="editBudgetTransaction(item.transaction_id)", :class="item.balance == budget[0]?.balance ? 'font-weight-bold text-decoration-underline' : null") {{ item.name}}
         template(#item.value="{item}")
-          .text-success(v-if="item.sign == 1") + {{ commaNumber(item.value) }}
-          .text-error(v-else) - {{ commaNumber(item.value) }}
+          div(:class="item.balance == budget[0]?.balance ? 'font-weight-bold text-decoration-underline' : null")
+            .font-weight-bold.text-green(v-if="item.sign == 1") + {{ commaNumber(item.value) }}
+            div(v-else) - {{ commaNumber(item.value) }}
         template(#item.balance="{item}")
-          span(:class="item.balance < 0 ? 'text-error' : null") {{ commaNumber(item.balance) }}
+          span(:class="[item.balance < 0 ? 'text-error' : null, item.balance == budget[0]?.balance ? 'font-weight-bold text-decoration-underline' : null]") {{ commaNumber(item.balance) }}
         template(#no-data)
           .text-center.text-h3.py-2
             div Can't budget without any transactions!
