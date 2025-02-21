@@ -34,7 +34,6 @@ const lastDay = computed(() => today.value.add(parseInt(budgetDays.value || 0)+1
 const upcomingTransactions = computed(() => {
   const final = []
   transactionStore.transactionsList.forEach(t => {
-    if (t.id != 4) return
     let e = t.end_date ? dayjs(t.end_date) : null
     if (e && e.isBefore(today.value)) return // Transaction ended before today
     let s = dayjs(t.start_date).startOf('day')
@@ -49,7 +48,7 @@ const upcomingTransactions = computed(() => {
     }
     const {id, name, value, sign} = t
     while (s.isBefore(lastDay.value) && s.isSameOrAfter(today.value, 'day') && (!e || (e && s.isBefore(e)))) {
-      final.push({ id: `${id}-${s.format('YYYY-MM-DD')}`, tansaction_id: id, name, value, sign, day: s})
+      final.push({ id: `${id}-${s.format('YYYY-MM-DD')}`, transaction_id: id, name, value, sign, day: s})
       if (!t.interval_value) break
       s = s.add(t.interval_value, t.interval)
     }
@@ -91,8 +90,24 @@ const budget = computed(() => {
   return [min, min2]
 })
 
-// Add Transaction
-const showAddTransaction = ref(false)
+// Edit Transactions
+const showEditTransaction = ref(false)
+const transactionProxy = ref({})
+const editBudgetTransaction = (id) => {
+  console.log(id)
+  if (parseInt(id)) {
+    const t = transactionStore.transactionsList.find(t => t.id == id)
+    console.log(t)
+    transactionProxy.value = {...t}
+  } else {
+    transactionProxy.value = {}
+  }
+  showEditTransaction.value = true
+}
+const closeEditTransaction = async () => {
+  showEditTransaction.value = false
+  setTimeout(() => transactionProxy.value = {}, 500)
+}
 
 </script>
 
@@ -124,22 +139,24 @@ v-container(fluid)
             v-col.d-flex.align-start
               .text-h5.mb-2
                 | Upcoming Transactions
-                v-btn.ml-2(icon="mdi-plus", @click="showAddTransaction=true", size="small", variant="text")
+                v-btn.ml-2(icon="mdi-plus", @click="editBudgetTransaction(null)", size="small", variant="text")
             v-col.d-flex.align-start(:cols="mobile ? 12 : md ? 4 : 3")
               v-text-field(label="Budget Days", v-model="budgetDays", type="number", prepend-icon="mdi-calendar-month")
         template(#item.day="{item}")
           | {{ dayjs(item.day).format('ddd, MMMM DD, YYYY')}}
+        template(#item.name="{item}")
+          .cursor-pointer(@click.prevent="editBudgetTransaction(item.transaction_id)") {{ item.name}}
         template(#item.value="{item}")
           .text-success(v-if="item.sign == 1") + {{ commaNumber(item.value) }}
           .text-error(v-else) - {{ commaNumber(item.value) }}
         template(#item.balance="{item}")
           span(:class="item.balance < 0 ? 'text-error' : null") {{ commaNumber(item.balance) }}
         template(#no-data)
-          .text-center.py-2
+          .text-center.text-h3.py-2
             div Can't budget without any transactions!
-            a(href="", @click.prevent="showAddTransaction=true") Add one
+            a(href="", @click.prevent="editBudgetTransaction(null)") Add one
 
-  v-dialog(v-model="showAddTransaction", persistent, :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : 'dialog-transition'")
-    edit-transaction.mx-auto(:item="{}", @close="showAddTransaction = false")
+  v-dialog(v-model="showEditTransaction", persistent, :fullscreen="mobile", :transition="mobile ? 'dialog-bottom-transition' : 'dialog-transition'")
+    edit-transaction.mx-auto(:item="transactionProxy", @close="closeEditTransaction")
 
 </template>
